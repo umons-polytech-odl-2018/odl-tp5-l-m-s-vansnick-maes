@@ -1,8 +1,9 @@
 package exercise1;
 
-import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.Set;
+import com.sun.org.apache.bcel.internal.generic.ExceptionThrower;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Represents a student.
@@ -11,13 +12,27 @@ import java.util.Set;
  * These scores are expressed as integers on a scale from 0 to 20.
  */
 public class Student {
+
+    private String name;
+    private String registrationNumber;
+    //private String course;
+    //private int score;
+    HashMap<String, Integer> scoreByCourse = new HashMap<String, Integer>();
+
+
     /**
      * Creates a new Student.
      *
      * @throws NullPointerException if one of the parameter is null.
      */
     public Student(String name, String registrationNumber) {
+        this.name = name;
+        this.registrationNumber=registrationNumber;
+        if(name == null)
+            throw new NullPointerException();
 
+        if (registrationNumber == null)
+            throw new NullPointerException();
     }
 
     /**
@@ -28,6 +43,13 @@ public class Student {
      * @throws IllegalArgumentException if the score is less than 0 or greater than 20.
      */
     public void setScore(String course, int score) {
+        scoreByCourse.put(course, score);
+
+        if (course ==null)
+            throw new NullPointerException();
+
+        if (score < 0 || score > 20)
+            throw new IllegalArgumentException();
 
     }
 
@@ -37,8 +59,12 @@ public class Student {
      * @return the score if found, <code>OptionalInt#empty()</code> otherwise.
      */
     public OptionalInt getScore(String course) {
-        return null;
+        //integer est une classe du coup doit la metre car contient série d'opérations
+        Integer nullableScore = scoreByCourse.get(course);
+
+        return nullableScore != null ? OptionalInt.of(nullableScore): OptionalInt.empty();
     }
+    //correspond à un if then else, le if est après point d'intérrogation, le alors équivaut au : et le dernier terme le else
 
     /**
      * Returns the average score.
@@ -46,7 +72,21 @@ public class Student {
      * @return the average score or 0 if there is none.
      */
     public double averageScore() {
-        return 0;
+
+        int count = 0;
+        double totalScore = 0.0;
+        for (Integer score : scoreByCourse.values()){
+            count ++;
+            totalScore += score;
+        }
+        return totalScore /count;
+
+        /* Autre méthode
+        return scoreByCourse.values().stream()
+        .mapToInt(Integer::intValue)
+        .average()
+        .orElse(0.0);
+         */
     }
 
     /**
@@ -55,7 +95,16 @@ public class Student {
      * @return the best scored course or <code>Optional#empty()</code> if there is none.
      */
     public Optional<String> bestCourse() {
-        return null;
+
+        return scoreByCourse.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .map(Map.Entry::getKey)
+                .findFirst();
+        //recupère valeurs (le cours et la note)
+        //trie les cours en fonction des notes par ordre croissant
+        //ne garde plus que les cours puisqu'ils sont triés
+        //.map on aurait pu le distribuer sur plein de machines
+        //renvoie celui d'en haut puisque c'est la plus haute note
     }
 
     /**
@@ -64,7 +113,12 @@ public class Student {
      * @return the highest score or 0 if there is none.
      */
     public int bestScore() {
-        return 0;
+        return scoreByCourse.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .mapToInt(Map.Entry::getValue)
+                .findFirst()
+                .orElse(0);
+
     }
 
     /**
@@ -72,7 +126,19 @@ public class Student {
      * A course is considered as passed if its score is higher than 12.
      */
     public Set<String> failedCourses() {
-        return null;
+
+        return scoreByCourse.entrySet().stream()
+        .filter(entry -> entry.getValue() < 12)
+            .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+        .map(Map.Entry::getKey)
+        .collect(Collectors.toCollection(LinkedHashSet::new));
+        /*
+
+        return scoreByCourse.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.naturalOrder()))
+                .map(Map.Entry::getValue)
+                .findFirst();
+        */
     }
 
     /**
